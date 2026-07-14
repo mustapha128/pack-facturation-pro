@@ -1,0 +1,38 @@
+# NOTE: persistent disks (needed so the SQLite files survive restarts/redeploys) require a
+# paid Render plan — the free plan's filesystem is ephemeral and data will be lost on
+# every deploy or restart. Bump `plan` below to "starter" (or similar) before going live
+# with real customer data.
+services:
+  - type: web
+    name: facturation-pro-api
+    runtime: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    plan: free
+    disk:
+      name: facturation-pro-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 4000
+      - key: APP_URL
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+  - type: web
+    name: facturation-pro-web
+    runtime: docker
+    dockerfilePath: ./client/Dockerfile
+    dockerContext: ./client
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        sync: false
