@@ -1,7 +1,6 @@
-# NOTE: persistent disks (needed so the SQLite files survive restarts/redeploys) require a
-# paid Render plan — the free plan's filesystem is ephemeral and data will be lost on
-# every deploy or restart. Bump `plan` below to "starter" (or similar) before going live
-# with real customer data.
+# NOTE: this free-tier config has NO persistent disk (Render's free plan doesn't support
+# them), so all data is lost on every redeploy/restart. Fine for a live demo; before
+# real customer data, upgrade `plan` below to a paid tier and add a `disk:` block back.
 services:
   - type: web
     name: facturation-pro-api
@@ -9,10 +8,6 @@ services:
     dockerfilePath: ./server/Dockerfile
     dockerContext: ./server
     plan: free
-    disk:
-      name: facturation-pro-data
-      mountPath: /app/data
-      sizeGB: 1
     envVars:
       - key: JWT_SECRET
         generateValue: true
