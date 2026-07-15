@@ -13,7 +13,7 @@ Tous les champs entre `[...]` sont à remplacer avec tes informations réelles.
 ## 1. Conditions Générales d'Utilisation (CGU)
 
 ### 1.1 Éditeur
-Ce service est édité par **[Nom de ton entreprise]**, [forme juridique, ex: SASU/EURL],
+Ce service est édité par **Impasse Logiciels**, [forme juridique, ex: SASU/EURL],
 au capital de [montant] €, immatriculée au RCS de [ville] sous le numéro [SIRET],
 dont le siège social est situé [adresse].
 Directeur de publication : [nom].
@@ -38,11 +38,11 @@ suivre leur trésorerie, etc.].
 - Rester seul responsable de l'exactitude des données saisies (factures, montants, TVA...).
 
 ### 1.5 Propriété intellectuelle
-Le logiciel, son code, son design et sa marque restent la propriété de [Nom de ton entreprise].
+Le logiciel, son code, son design et sa marque restent la propriété de Impasse Logiciels.
 Les données saisies par le client (clients, factures, contacts...) restent sa propriété.
 
 ### 1.6 Responsabilité
-[Nom de ton entreprise] ne saurait être tenue responsable des pertes de données résultant d'une
+Impasse Logiciels ne saurait être tenue responsable des pertes de données résultant d'une
 mauvaise utilisation du service par l'utilisateur, d'un cas de force majeure, ou d'une interruption
 du service par un sous-traitant technique (hébergeur, etc.).
 
@@ -55,7 +55,7 @@ compétence des tribunaux de [ville].
 ## 2. Politique de confidentialité (RGPD)
 
 ### 2.1 Responsable du traitement
-[Nom de ton entreprise], [adresse], [email de contact DPO ou responsable].
+Impasse Logiciels, [adresse], [email de contact DPO ou responsable].
 
 ### 2.2 Données collectées
 - **Données de compte** : email, mot de passe (hashé), nom de l'entreprise.
