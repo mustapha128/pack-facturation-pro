@@ -3,8 +3,10 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { platformDb } from "../platform.js";
 import { signToken } from "../auth.js";
+import { rateLimit } from "../rateLimit.js";
 
 export const authRouter = Router();
+const authLimiter = rateLimit(10, 15 * 60 * 1000); // 10 tentatives / 15 min par IP
 
 const registerSchema = z.object({
   entreprise: z.string().min(1, "Le nom de l'entreprise est requis"),
@@ -12,7 +14,7 @@ const registerSchema = z.object({
   password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
 });
 
-authRouter.post("/register", (req, res) => {
+authRouter.post("/register", authLimiter, (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
   const { entreprise, email, password } = parsed.data;
@@ -36,7 +38,7 @@ authRouter.post("/register", (req, res) => {
 
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(1) });
 
-authRouter.post("/login", (req, res) => {
+authRouter.post("/login", authLimiter, (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Identifiants invalides" });
   const { email, password } = parsed.data;

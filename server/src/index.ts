@@ -11,7 +11,9 @@ import { historiqueRouter } from "./routes/historique.js";
 import { billingRouter, billingWebhookRaw } from "./routes/billing.js";
 
 const app = express();
-app.use(cors());
+// In production, only the deployed frontend may call this API. Locally (no APP_URL set),
+// allow any origin so `npm run dev` keeps working without extra config.
+app.use(cors(process.env.APP_URL ? { origin: process.env.APP_URL } : {}));
 // Stripe webhook needs the raw, untouched body to verify its signature — every
 // other route gets normal JSON parsing.
 app.use("/api/billing/webhook", billingWebhookRaw);
