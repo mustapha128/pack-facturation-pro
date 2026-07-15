@@ -26,8 +26,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     load();
-    const interval = setInterval(load, 15000);
-    return () => clearInterval(interval);
+    const interval = setInterval(load, 3000);
+    window.addEventListener("focus", load);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", load);
+    };
   }, []);
 
   if (!data) return <p className="text-muted">Chargement du tableau de bord...</p>;

@@ -30,8 +30,9 @@ billingRouter.post("/checkout", requireAuth, async (req: AuthedRequest, res) => 
 
   const org = platformDb.prepare("SELECT * FROM organisations WHERE id = ?").get(req.user!.organisation_id) as any;
 
+  // Paiement unique (licence à vie), pas un abonnement récurrent : mode "payment", pas "subscription".
   const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
+    mode: "payment",
     line_items: [{ price: STRIPE_PRICE_ID, quantity: 1 }],
     customer: org?.stripe_customer_id || undefined,
     client_reference_id: String(req.user!.organisation_id),
@@ -56,21 +57,16 @@ billingRouter.post("/webhook", async (req, res) => {
     return res.status(400).send(`Signature webhook invalide`);
   }
 
+  // Paiement unique confirmé : on active définitivement l'accès (pas de renouvellement,
+  // pas d'annulation d'abonnement à gérer puisqu'il n'y en a pas).
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const organisationId = Number(session.client_reference_id);
     if (organisationId) {
       platformDb
-        .prepare("UPDATE organisations SET statut_abonnement = 'actif', plan = 'pro', stripe_customer_id = ?, stripe_subscription_id = ? WHERE id = ?")
-        .run(String(session.customer), String(session.subscription), organisationId);
+        .prepare("UPDATE organisations SET statut_abonnement = 'actif', plan = 'pack_complet', stripe_customer_id = ? WHERE id = ?")
+        .run(String(session.customer), organisationId);
     }
-  }
-
-  if (event.type === "customer.subscription.deleted") {
-    const subscription = event.data.object as Stripe.Subscription;
-    platformDb
-      .prepare("UPDATE organisations SET statut_abonnement = 'annulé' WHERE stripe_subscription_id = ?")
-      .run(subscription.id);
   }
 
   res.json({ received: true });

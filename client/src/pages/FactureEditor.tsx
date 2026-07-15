@@ -26,6 +26,8 @@ export default function FactureEditor() {
   const [numero, setNumero] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [autoSaveState, setAutoSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [loaded, setLoaded] = useState(isNew);
 
   useEffect(() => {
     api.get<Client[]>("/clients").then(setClients);
@@ -42,12 +44,27 @@ export default function FactureEditor() {
         setNotes(f.notes || "");
         setLignes(f.lignes.length ? f.lignes : [nouvelleLigne()]);
         setNumero(f.numero);
+        setLoaded(true);
       });
     }
   }, [id, isNew]);
 
   // Recalcul automatique et instantané à chaque changement
   const totaux = useMemo(() => calculerFacture(lignes, remiseGlobale), [lignes, remiseGlobale]);
+
+  // Sauvegarde automatique : dès qu'un champ change, l'enregistrement se déclenche seul
+  // après une courte pause de frappe — aucun clic requis, conformément au cahier des charges.
+  useEffect(() => {
+    if (!loaded) return;
+    if (!clientId) return;
+    if (lignes.every((l) => !l.designation.trim())) return;
+
+    const timeout = setTimeout(() => {
+      save(true);
+    }, 700);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, clientId, statut, remiseGlobale, dateEcheance, notes, JSON.stringify(lignes)]);
 
   function updateLigne(idx: number, patch: Partial<LigneFacture>) {
     setLignes((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
@@ -75,12 +92,13 @@ export default function FactureEditor() {
     setLignes((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev));
   }
 
-  async function save() {
-    setError("");
-    if (!clientId) { setError("Veuillez sélectionner un client"); return; }
-    if (lignes.some((l) => !l.designation.trim())) { setError("Toutes les lignes doivent avoir une désignation"); return; }
+  async function save(silent = false) {
+    if (!silent) setError("");
+    if (!clientId) { if (!silent) setError("Veuillez sélectionner un client"); return; }
+    if (lignes.some((l) => !l.designation.trim())) { if (!silent) setError("Toutes les lignes doivent avoir une désignation"); return; }
 
-    setSaving(true);
+    if (silent) setAutoSaveState("saving");
+    else setSaving(true);
     try {
       const payload = {
         client_id: clientId,
@@ -103,8 +121,10 @@ export default function FactureEditor() {
       } else {
         await api.put<Facture>(`/factures/${id}`, payload);
       }
+      if (silent) setAutoSaveState("saved");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Erreur lors de l'enregistrement");
+      if (!silent) setError(err instanceof ApiError ? err.message : "Erreur lors de l'enregistrement");
+      if (silent) setAutoSaveState("idle");
     } finally {
       setSaving(false);
     }
@@ -114,14 +134,18 @@ export default function FactureEditor() {
     <div>
       <div className="topbar">
         <h1>{isNew ? "Nouvelle facture" : `Facture ${numero ?? ""}`}</h1>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <span className="text-muted" style={{ fontSize: "0.8rem" }}>
+            {autoSaveState === "saving" && "Enregistrement automatique..."}
+            {autoSaveState === "saved" && "✓ Enregistré automatiquement"}
+          </span>
           {!isNew && (
             <>
               <button className="btn" onClick={() => downloadFile(`/export/factures/${id}/pdf`, `${numero}.pdf`)}>Export PDF</button>
               <button className="btn" onClick={() => downloadFile(`/export/factures/${id}/csv`, `${numero}.csv`)}>Export CSV/Excel</button>
             </>
           )}
-          <button className="btn btn-gold" onClick={save} disabled={saving}>{saving ? "Enregistrement..." : "Enregistrer"}</button>
+          <button className="btn btn-gold" onClick={() => save()} disabled={saving}>{saving ? "Enregistrement..." : "Enregistrer"}</button>
         </div>
       </div>
 
